@@ -6,7 +6,6 @@
 [![SDK](https://img.shields.io/badge/SDK-Strands_Agents-00C7B7?style=for-the-badge)](https://strandsagents.com/)
 [![Protocol](https://img.shields.io/badge/Protocol-Model_Context_Protocol_(MCP)-8A2BE2?style=for-the-badge)](https://modelcontextprotocol.io/)
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE.txt)
 
 An enterprise-grade, autonomous customer support agent engineered on the **Amazon Bedrock AgentCore Runtime** and the **Strands SDK**. The assistant serves as an intelligent conversational interface for an e-commerce platform, capable of handling multi-turn transactional workflows (order lookups, return processing), grounded semantic search with **Bedrock Knowledge Bases (RAG)**, cross-session customer memory with **AgentCore Memory**, sandboxed arithmetic computation via **AgentCore Code Interpreter**, and live web navigation with **AgentCore Browser**.
 
