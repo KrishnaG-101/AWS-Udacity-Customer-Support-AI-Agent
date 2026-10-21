@@ -328,9 +328,3 @@ uv run agentcore destroy
 # 4. Empty and delete S3 bucket
 # 5. Delete API Gateway REST API and Lambda functions
 ```
-
----
-
-## License
-
-This project is licensed under the MIT License — see the [LICENSE.txt](LICENSE.txt) file for details.
