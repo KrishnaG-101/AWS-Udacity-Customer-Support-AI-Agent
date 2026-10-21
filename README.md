@@ -33,6 +33,7 @@ An enterprise-grade, autonomous customer support agent engineered on the **Amazo
   - [Step 6: Direct Code Deployment](#step-6-direct-code-deployment)
   - [Step 7: Verification Invocations](#step-7-verification-invocations)
   - [Step 8: Infrastructure Teardown & Cost Cleanup](#step-8-infrastructure-teardown--cost-cleanup)
+- [Academic Integrity & AI Disclosure](#academic-integrity--ai-disclosure)
 - [License](#license)
 
 ---
@@ -327,3 +328,12 @@ uv run agentcore destroy
 # 4. Empty and delete S3 bucket
 # 5. Delete API Gateway REST API and Lambda functions
 ```
+
+---
+
+## Academic Integrity & AI Disclosure
+
+In accordance with the **Udacity Honor Code**:
+* **Brainstorming & Architecture:** AI tooling (Gemini / Antigravity) was utilized as a collaborative pair-programming and brainstorming assistant for evaluating design trade-offs, analyzing rubric criteria, and troubleshooting the cross-platform serverless Linux container execution permissions for Playwright (`PLAYWRIGHT_NODEJS_PATH` bootstrap shim).
+* **Documentation & Presentation:** AI assistance was used in structuring and formatting the portfolio `README.md`, visual verification tables, and organizational layout.
+* **Independent Execution & Verification:** All AWS cloud resources (AWS Lambda, API Gateway REST API, AgentCore Gateway, Bedrock Knowledge Base, AgentCore Memory, and AgentCore Runtime) were provisioned, configured, deployed, and tested live by the author. All functional test scenarios (`t1` through `t6`) and code implementations were executed and verified for correctness.
