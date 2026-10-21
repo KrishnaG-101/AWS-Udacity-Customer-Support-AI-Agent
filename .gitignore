@@ -1,0 +1,75 @@
+# ==============================================================================
+# Git Ignore Configuration - AWS Bedrock AgentCore Customer Support Agent
+# ==============================================================================
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+*.venv
+
+# Python Bytecode, Caches & Distribution
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Type Checking
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+
+# Bedrock AgentCore Packaging Artifacts
+# Note: dependencies.zip is > 100MB and must never be committed to GitHub
+.bedrock_agentcore/
+*.zip
+*.tar.gz
+
+# Node / Playwright
+node_modules/
+.playwright/
+
+# OS-Specific Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Environment Variables & Sensitive Credentials
+.env
+.env.*
+*.pem
+credentials
