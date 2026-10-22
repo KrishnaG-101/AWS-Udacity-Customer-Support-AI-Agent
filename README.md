@@ -94,7 +94,7 @@ This project implements an end-to-end architecture solving these enterprise chal
 ```
 
 ### Architectural Decisions & Rationale:
-1. **Model Context Protocol (MCP) Gateway Integration:** Decouples the agent from concrete backend implementations. REST APIs and serverless Lambdas are abstracted as MCP tools, providing standard schema validation and unified audit trails.
+1. **Model Context Protocol (MCP) Gateway Integration & Fault Tolerance:** Decouples the agent from concrete backend implementations. REST APIs and serverless Lambdas are abstracted as standardized MCP tools using streamable HTTP transport (`streamable_http_client`). Employs explicit tool discovery (`list_tools_sync`) wrapped in structured exception handling (`TimeoutError`, `ConnectionError`) to guarantee graceful user messaging and prevent silent failures.
 2. **Dynamic Runtime Playwright Shim:** AWS serverless container runtimes mount `/var/task` as read-only. Deploying from Windows hosts omits Unix POSIX execute bits (`0o755`), causing `node` to fail. Our dynamic bootstrap copies the binary to `/tmp/playwright-node`, executes `chmod 0o755`, and sets `PLAYWRIGHT_NODEJS_PATH`, enabling zero-packaging browser automation.
 3. **Dual-Strategy Memory Architecture:** Splits long-term context into `customer_facts` (`cs_agent/{actorId}/facts`) and `customer_preferences` (`cs_agent/{actorId}/preferences`), ensuring semantic recall stays bounded, structured, and noise-free.
 

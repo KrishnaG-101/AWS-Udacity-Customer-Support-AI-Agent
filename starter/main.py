@@ -47,8 +47,10 @@ from strands.models import BedrockModel
 from strands.tools.mcp.mcp_client import MCPClient
 from strands_tools.browser import AgentCoreBrowser
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("CSAI_Agent")
+logger.setLevel(logging.INFO)
+
 
 # ── Playwright Linux Runtime Shim ─────────────────────────────────────────────
 # Fix Playwright Node binary permissions on Linux container runtimes (resolves
@@ -412,6 +414,30 @@ print(json.dumps(result))
 
 
 # ── TODO 8 — Agent Entrypoint ─────────────────────────────────────────────────
+SYSTEM_PROMPT = (
+    "You are an AI customer support agent for an e-commerce platform. "
+    "You have tools to track orders, process refunds, calculate discounts, "
+    "search the knowledge base, and browse the web. Be polite, concise, and helpful. "
+    "When using context from past memories, incorporate it naturally without breaking character."
+)
+
+
+def _extract_response_text(response: Any) -> str:
+    """Safely extract output string from Strands agent response."""
+    if hasattr(response, "text") and response.text:
+        return response.text
+    if hasattr(response, "message") and response.message:
+        text = MemoryHook._get_text(response.message)
+        if text:
+            return text
+    if hasattr(response, "messages") and response.messages:
+        last_msg = response.messages[-1]
+        text = MemoryHook._get_text(last_msg)
+        if text:
+            return text
+    return str(response)
+
+
 @app.entrypoint
 async def invoke(payload, context=None):
     """
@@ -429,56 +455,103 @@ async def invoke(payload, context=None):
 
         memory_hook = MemoryHook(actor_id, session_id, memory_client, MEMORY_ID)
         agent_core_browser = AgentCoreBrowser(region=REGION)
-        mcp_client = MCPClient(url=GATEWAY_URL)
 
         tools = [
             search_knowledge_base,
             calculate_loyalty_discount,
             agent_core_browser.browser,
-            mcp_client,
         ]
 
-        system_prompt = (
-            "You are an AI customer support agent for an e-commerce platform. "
-            "You have tools to track orders, process refunds, calculate discounts, "
-            "search the knowledge base, and browse the web. Be polite, concise, and helpful. "
-            "When using context from past memories, incorporate it naturally without breaking character."
+        gateway_client = MCPClient(
+            lambda: streamable_http_client(url=GATEWAY_URL)
+        )
+
+        try:
+            with gateway_client:
+                gateway_loaded = False
+                try:
+                    gateway_tools = gateway_client.list_tools_sync()
+                    tools.extend(gateway_tools)
+
+                    logger.info(
+                        "Gateway connected successfully. Loaded %d tools.",
+                        len(gateway_tools),
+                    )
+                    gateway_loaded = True
+
+                except TimeoutError:
+                    logger.exception("Gateway tool loading timed out")
+
+                except ConnectionError:
+                    logger.exception("Gateway connection failed")
+
+                except Exception as exc:
+                    logger.exception(
+                        "Gateway tool loading failed: %s", exc
+                    )
+
+                active_prompt = SYSTEM_PROMPT
+                if not gateway_loaded:
+                    active_prompt += (
+                        "\n\nIMPORTANT: The external order tracking and refund gateway service is currently unavailable. "
+                        "If the customer asks to track an order, check order status, or request/process a refund, "
+                        "politely explain that the order and refund system is temporarily undergoing maintenance, "
+                        "and advise them to check back shortly or reach out to customer support. Do not expose internal technical errors or secrets."
+                    )
+
+                agent = Agent(
+                    model=model,
+                    system_prompt=active_prompt,
+                    tools=tools,
+                    hooks=[memory_hook],
+                    state={
+                        "actor_id": actor_id,
+                        "session_id": session_id,
+                    },
+                )
+
+                response = await agent.invoke_async(user_input)
+                return _extract_response_text(response)
+
+        except TimeoutError:
+            logger.exception("Gateway tool loading timed out")
+        except ConnectionError:
+            logger.exception("Gateway connection failed")
+        except Exception as exc:
+            logger.exception(
+                "Gateway tool loading failed: %s", exc
+            )
+
+        # Fallback if Gateway connection failed during client initialization
+        fallback_prompt = (
+            SYSTEM_PROMPT +
+            "\n\nIMPORTANT: The external order tracking and refund gateway service is currently unavailable. "
+            "If the customer asks to track an order, check order status, or request/process a refund, "
+            "politely explain that the order and refund system is temporarily undergoing maintenance, "
+            "and advise them to check back shortly or reach out to customer support. Do not expose internal technical errors or secrets."
         )
 
         agent = Agent(
             model=model,
+            system_prompt=fallback_prompt,
             tools=tools,
-            system_prompt=system_prompt,
-            hooks=[memory_hook]
+            hooks=[memory_hook],
+            state={
+                "actor_id": actor_id,
+                "session_id": session_id,
+            },
         )
 
         response = await agent.invoke_async(user_input)
-
-        # Safely extract output string
-        if hasattr(response, "text") and response.text:
-            return response.text
-        if hasattr(response, "message") and response.message:
-            text = MemoryHook._get_text(response.message)
-            if text:
-                return text
-        if hasattr(response, "messages") and response.messages:
-            last_msg = response.messages[-1]
-            text = MemoryHook._get_text(last_msg)
-            if text:
-                return text
-
-        return str(response)
+        return _extract_response_text(response)
 
     except Exception as e:
-        sub_errors = []
-        if hasattr(e, "exceptions"):
-            for sub in e.exceptions:
-                sub_errors.append(f"{type(sub).__name__}: {sub}")
-        err_details = f"{type(e).__name__}: {e}"
-        if sub_errors:
-            err_details += " | Sub-errors: " + "; ".join(sub_errors)
-        logger.error(f"Execution Error: {err_details}")
-        return f"I'm sorry, I encountered an internal error processing your request. ({err_details})"
+        logger.exception("Execution Error: %s", e)
+        return (
+            "I apologize, but I am currently experiencing technical difficulties. "
+            "Please try again in a few moments or contact support at support@example.com."
+        )
+
 
 
 # ── CLI entry point (do not modify) ──────────────────────────────────────────
